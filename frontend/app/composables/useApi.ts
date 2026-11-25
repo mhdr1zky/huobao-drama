@@ -192,8 +192,19 @@ export const settingsAPI = {
   bannedWords: () => api.get<{ words: { word: string; replace: string }[] }>('/settings/banned-words'),
   setBannedWords: (words: { word: string; replace?: string }[]) => api.put('/settings/banned-words', { words }),
   networkCheck: () => api.get<{ ok: boolean; latencyMs: number; quality: string; warnings: string[] }>('/settings/network-check'),
+  // ── Vast.ai Dashboard API ──────────────────────────────────────────────────
+  // POST /vastai/check — Verifikasi API key & saldo akun
   checkVastAi: (apiKey: string) => api.post<{ ok: boolean; email?: string; credit?: number; error?: string }>('/settings/vastai/check', { api_key: apiKey }),
+  // POST /vastai/offers — Cari penawaran GPU terbaik sesuai budget
   searchVastOffers: (apiKey: string, maxBudget?: number) => api.post<{ offers: any[] }>('/settings/vastai/offers', { api_key: apiKey, max_budget: maxBudget }),
+  // GET /vastai/instances — List instance yang sudah dirent
+  listVastInstances: (apiKey: string) => api.get<{ instances: any[] }>(`/settings/vastai/instances?api_key=${encodeURIComponent(apiKey)}`),
+  // POST /vastai/rent — Rent GPU dari offer_id tertentu
+  rentVastInstance: (apiKey: string, offerId: number, opts?: { image?: string; disk_gb?: number }) =>
+    api.post<{ instanceId: number; instanceApiKey?: string }>('/settings/vastai/rent', { api_key: apiKey, offer_id: offerId, ...opts }),
+  // DELETE /vastai/instances/:id — Hancurkan instance
+  destroyVastInstance: (apiKey: string, instanceId: number) =>
+    api.del<{ destroyed: boolean; instanceId: number }>(`/settings/vastai/instances/${instanceId}?api_key=${encodeURIComponent(apiKey)}`),
 }
 
 // 服务器/Docker 部署的版本检查与更新（桌面版走 useDesktopBridge，不用此 API）

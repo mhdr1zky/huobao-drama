@@ -39,3 +39,33 @@ test('VastAIVideoAdapter builds multishot prompt format matching DRACIN-AI recip
   assert.ok(req.body.prompt['6'].inputs.text.includes('<Picture 1> <Picture 2>'))
   assert.ok(req.body.prompt['6'].inputs.text.includes('Scene 1: Emperor sitting on throne'))
 })
+
+test('vastai.ts uses correct API endpoint and reliability2 field', async () => {
+  const fs = await import('node:fs')
+  const content = fs.readFileSync(new URL('../src/services/vastai.ts', import.meta.url), 'utf-8')
+
+  // Harus pakai /api/v0 dashboard endpoint (bukan localhost)
+  assert.match(content, /https:\/\/console\.vast\.ai\/api\/v0/)
+  // Harus pakai reliability2 (field nyata dari API)
+  assert.match(content, /reliability2/)
+  // Harus punya listInstances (endpoint GET /instances/)
+  assert.match(content, /listInstances/)
+  // Harus punya rentInstance
+  assert.match(content, /rentInstance/)
+  // Harus punya destroyInstance
+  assert.match(content, /destroyInstance/)
+  // Harus punya waitForRunning
+  assert.match(content, /waitForRunning/)
+  // Tidak boleh pakai /instances/{id}/ untuk polling (harus /instances/)
+  assert.match(content, /\/instances\//)
+})
+
+test('settings route exports vastai rent and destroy endpoints', async () => {
+  const fs = await import('node:fs')
+  const content = fs.readFileSync(new URL('../src/routes/settings.ts', import.meta.url), 'utf-8')
+
+  assert.match(content, /\/vastai\/rent/)
+  assert.match(content, /\/vastai\/instances/)
+  assert.match(content, /rentInstance/)
+  assert.match(content, /destroyInstance/)
+})

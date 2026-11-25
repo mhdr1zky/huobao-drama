@@ -4,7 +4,7 @@
 import { Hono } from 'hono'
 import { getContentLanguage, setContentLanguage, getToursSeen, setToursSeen, getBannedWords, setBannedWords, CONTENT_LANGUAGES, type ContentLanguage } from '../services/app-settings.js'
 import { checkLocalNetwork } from '../utils/network-check.js'
-import { checkVastAccount, searchBestGPUOffers } from '../services/vastai.js'
+import { checkVastAccount, searchBestGPUOffers, listInstances, rentInstance, destroyInstance } from '../services/vastai.js'
 import { success, badRequest } from '../utils/response.js'
 
 const app = new Hono()
@@ -32,6 +32,41 @@ app.post('/vastai/offers', async (c) => {
   if (!apiKey) return badRequest(c, 'API Key Vast.ai diperlukan')
   const offers = await searchBestGPUOffers(apiKey, maxBudget)
   return success(c, { offers })
+})
+
+// GET /vastai/instances — List semua instance aktif milik akun
+app.get('/vastai/instances', async (c) => {
+  const apiKey = c.req.query('api_key')
+  if (!apiKey) return badRequest(c, 'api_key query param diperlukan')
+  const instances = await listInstances(apiKey)
+  return success(c, { instances })
+})
+
+// POST /vastai/rent — Sewa GPU instance dari offer ID yang dipilih
+app.post('/vastai/rent', async (c) => {
+  const body = await c.req.json().catch(() => null)
+  const { api_key: apiKey, offer_id: offerId, image, disk_gb: diskGb } = body ?? {}
+  if (!apiKey || !offerId) return badRequest(c, 'api_key dan offer_id diperlukan')
+  try {
+    const result = await rentInstance(apiKey, Number(offerId), {
+      image: image ?? undefined,
+      diskGb: diskGb ? Number(diskGb) : undefined,
+      runtype: 'ssh',
+    })
+    return success(c, result)
+  } catch (err: any) {
+    return badRequest(c, err.message)
+  }
+})
+
+// DELETE /vastai/instances/:id — Hancurkan instance
+app.delete('/vastai/instances/:id', async (c) => {
+  const apiKey = c.req.query('api_key')
+  const instanceId = Number(c.req.param('id'))
+  if (!apiKey) return badRequest(c, 'api_key query param diperlukan')
+  if (!instanceId) return badRequest(c, 'Instance ID tidak valid')
+  await destroyInstance(apiKey, instanceId)
+  return success(c, { destroyed: true, instanceId })
 })
 
 // GET /content-language — 当前 AI 内容语言
