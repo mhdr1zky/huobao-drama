@@ -7,7 +7,7 @@
 [![Node Version](https://img.shields.io/badge/Node.js-20+-339933?style=flat&logo=node.js)](https://nodejs.org)
 [![Vue Version](https://img.shields.io/badge/Vue-3.x-4FC08D?style=flat&logo=vue.js)](https://vuejs.org)
 [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-[![Download](https://img.shields.io/github/v/release/chatfire-AI/huobao-drama?style=flat&logo=github&label=Download)](https://github.com/chatfire-AI/huobao-drama/releases/latest)
+[![Download](https://img.shields.io/github/v/release/mhdr1zky/huobao-drama?style=flat&logo=github&label=Download)](https://github.com/mhdr1zky/huobao-drama/releases/latest)
 
 [English](README.md) | **Bahasa Indonesia** | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
@@ -127,7 +127,7 @@ Konfigurasi bersifat opsional dengan nilai bawaan siap pakai:
 
 ```bash
 # Clone repositori
-git clone https://github.com/chatfire-AI/huobao-drama.git
+git clone https://github.com/mhdr1zky/huobao-drama.git
 cd huobao-drama
 
 # Pasang dependensi backend
@@ -178,7 +178,7 @@ Alur lengkap pembuatan drama dari novel hingga video selesai:
 
 ## 🖥️ Aplikasi Desktop (Direkomendasikan)
 
-Installer mandiri tersedia di [GitHub Releases](https://github.com/chatfire-AI/huobao-drama/releases/latest) untuk **Windows x64** dan **macOS (Apple Silicon & Intel)**.
+Installer mandiri tersedia di [GitHub Releases](https://github.com/mhdr1zky/huobao-drama/releases/latest) untuk **Windows x64** dan **macOS (Apple Silicon & Intel)**.
 
 Untuk mem-package sendiri dari source code:
 ```bash

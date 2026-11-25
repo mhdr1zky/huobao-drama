@@ -76,6 +76,16 @@ Menambahkan penyedia generasi video mandiri berbasis rental GPU cloud (**Vast.ai
 - **Perubahan**: Memastikan `typecheck` backend, semua test suite, dan alur aplikasi berjalan bersih tanpa regresi pada provider lain.
 - **Test verifikasi**: Jalankan `npm run typecheck` di backend dan unit test suite di frontend.
 
+### Langkah 6 — Pengalihan Sumber Update ke Repositori Sendiri (`mhdr1zky/huobao-drama`) ✅ Selesai
+- **Perubahan**:
+  - `backend/src/services/server-update.ts`: Default `FEED_URLS` dialihkan ke `https://github.com/mhdr1zky/huobao-drama/releases/latest/download/latest.json`.
+  - `desktop/src/updater.ts`: Update feed Electron dialihkan ke repository `mhdr1zky/huobao-drama`.
+  - `desktop/scripts/make-update-feed.mjs` & `desktop/scripts/publish-release.mjs`: Script rilis GitHub dialihkan ke `mhdr1zky/huobao-drama`.
+  - `docker-compose.yml`: Contoh environment update dialihkan ke repo sendiri.
+  - `frontend/app/layouts/default.vue`: Tombol logo link GitHub di navigasi atas diarahkan ke `https://github.com/mhdr1zky/huobao-drama`.
+  - `README.md`, `readme-id.md`, `README.en.md`, `README.ja.md`, `README.ko.md`, `README.zh-CN.md`: Seluruh tautan clone, rilis, dan badge diarahkan ke repositori sendiri.
+- **Test verifikasi**: `backend/tests/repo-update-check.test.ts` memverifikasi seluruh file rujukan update mengarah ke `mhdr1zky/huobao-drama`.
+
 ---
 
 ## 4. Risiko dan Mitigasinya
