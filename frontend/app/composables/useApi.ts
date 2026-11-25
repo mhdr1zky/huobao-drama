@@ -197,6 +197,15 @@ export const settingsAPI = {
   checkVastAi: (apiKey: string) => api.post<{ ok: boolean; email?: string; credit?: number; error?: string }>('/settings/vastai/check', { api_key: apiKey }),
   // POST /vastai/offers — Cari penawaran GPU terbaik sesuai budget
   searchVastOffers: (apiKey: string, maxBudget?: number) => api.post<{ offers: any[] }>('/settings/vastai/offers', { api_key: apiKey, max_budget: maxBudget }),
+  // POST /vastai/preflight — Cek apakah pod sudah running atau ambil rincian mesin & harga sebelum sewa
+  vastPreflight: (apiKey: string, maxBudget?: number) =>
+    api.post<{
+      alreadyRunning: boolean
+      offer?: any
+      instance?: any
+      credit?: number
+      email?: string
+    }>('/settings/vastai/preflight', { api_key: apiKey, max_budget: maxBudget }),
   // GET /vastai/instances — List instance yang sudah dirent
   listVastInstances: (apiKey: string) => api.get<{ instances: any[] }>(`/settings/vastai/instances?api_key=${encodeURIComponent(apiKey)}`),
   // POST /vastai/rent — Rent GPU dari offer_id tertentu

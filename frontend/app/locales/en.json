@@ -94,6 +94,20 @@
     "confirmDialog": {
       "title": "Confirm delete"
     },
+    "vastConfirm": {
+      "title": "Vast.ai GPU Rental Confirmation",
+      "subtitle": "Review machine specifications and estimated price before spinning up the GPU:",
+      "gpu": "GPU Model",
+      "price": "Rental Price",
+      "perHour": "/ hr",
+      "bandwidth": "Host Bandwidth",
+      "reliability": "Reliability",
+      "location": "Host Location",
+      "balance": "Your Balance",
+      "autoDestroyNotice": "Balance Protection: The GPU instance will automatically be destroyed after 15 minutes of idle time if no new tasks are submitted.",
+      "confirmBtn": "Proceed & Rent GPU",
+      "reusingActive": "Reusing active Vast.ai pod #{id} ({gpu})"
+    },
     "localeSwitcher": {
       "label": "Switch UI language"
     },

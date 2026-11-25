@@ -94,6 +94,20 @@
     "confirmDialog": {
       "title": "削除の確認"
     },
+    "vastConfirm": {
+      "title": "Vast.ai GPU レンタル確認",
+      "subtitle": "GPU を起動する前にマシン構成と推定価格をご確認ください：",
+      "gpu": "GPU モデル",
+      "price": "レンタル料金",
+      "perHour": "/ 時間",
+      "bandwidth": "ホスト帯域幅",
+      "reliability": "信頼性",
+      "location": "ホスト地域",
+      "balance": "アカウント残高",
+      "autoDestroyNotice": "残高保護：新しいタスクがない場合、15 分間のアイドル後に GPU インスタンスは自動破棄されます。",
+      "confirmBtn": "続行して GPU をレンタル",
+      "reusingActive": "アクティブな Vast.ai ポッド #{id} ({gpu}) を再利用中"
+    },
     "localeSwitcher": {
       "label": "表示言語を切り替え"
     },

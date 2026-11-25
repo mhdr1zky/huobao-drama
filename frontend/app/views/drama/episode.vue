@@ -1442,6 +1442,17 @@
         @confirm="confirmDeleteAsset"
         @cancel="assetDelete.open = false"
       />
+
+      <VastGpuConfirmDialog
+        :open="vastConfirmOpen"
+        :loading="vastConfirmLoading"
+        :offer="vastConfirmOffer"
+        :credit="vastConfirmCredit"
+        :already-running="vastConfirmAlreadyRunning"
+        :instance="vastConfirmInstance"
+        @confirm="onVastConfirm"
+        @cancel="onVastCancel"
+      />
     </main>
     </div>
   </div>
@@ -1454,12 +1465,13 @@ import {
   Users, FileText, FolderKanban, Clapperboard, Download, Loader2,
   Plus, X, ListTodo, CircleHelp,
 } from 'lucide-vue-next'
-import { api, dramaAPI, episodeAPI, storyboardAPI, characterAPI, sceneAPI, propAPI, taskAPI, mergeAPI, aiConfigAPI, uploadAPI } from '~/composables/useApi'
+import { api, dramaAPI, episodeAPI, storyboardAPI, characterAPI, sceneAPI, propAPI, taskAPI, mergeAPI, aiConfigAPI, uploadAPI, settingsAPI } from '~/composables/useApi'
 import { startTour, autoTour } from '~/composables/useTour'
 import { useAgent } from '~/composables/useAgent'
 import { resolveTextModelSelection } from '~/utils/text-model-selection'
 import { toastError, mapError, MODERATION_RE } from '~/composables/useToast'
 import LocaleSwitcher from '~/components/LocaleSwitcher.vue'
+import VastGpuConfirmDialog from '~/components/VastGpuConfirmDialog.vue'
 
 definePageMeta({ layout: 'studio' })
 
@@ -3392,11 +3404,63 @@ function uploadAssetImage(kind, id) {
   })
 }
 
+// Vast.ai GPU Konfirmasi Sewa & Proteksi Biaya
+const vastConfirmOpen = ref(false)
+const vastConfirmLoading = ref(false)
+const vastConfirmOffer = ref(null)
+const vastConfirmCredit = ref(null)
+const vastConfirmAlreadyRunning = ref(false)
+const vastConfirmInstance = ref(null)
+let pendingVastAction = null
+
+async function onVastConfirm() {
+  vastConfirmOpen.value = false
+  if (pendingVastAction) {
+    const action = pendingVastAction
+    pendingVastAction = null
+    await action()
+  }
+}
+function onVastCancel() {
+  vastConfirmOpen.value = false
+  pendingVastAction = null
+}
+
 async function genVid(sb, opts = {}) {
   if (!opts.forceNew && canRecoverVideo(sb.id)) return recoverVideo(sb)
   const latest = latestVideoTask(sb.id)
   const forceNew = opts.forceNew || latest?.status === 'failed'
   if (forceNew && !window.confirm(t('episode.recovery.confirmNew'))) return
+
+  // Proteksi Saldo & Konfirmasi Rincian Mesin GPU Vast.ai
+  if (selectedVideoConfig.value?.provider === 'vastai' && !opts.vastConfirmed) {
+    const cfg = selectedVideoConfig.value
+    if (cfg?.base_url?.includes('console.vast.ai') || !cfg?.base_url) {
+      try {
+        vastConfirmLoading.value = true
+        const preflight = await settingsAPI.vastPreflight(cfg.api_key)
+        if (preflight?.alreadyRunning) {
+          // Pod sudah aktif, gunakan tanpa sewa ulang
+          toast.info(t('components.vastConfirm.reusingActive', { id: preflight.instance?.id, gpu: preflight.instance?.gpu_name }))
+        } else if (preflight?.offer) {
+          // Tampilkan rincian mesin & estimasi biaya ke pengguna
+          vastConfirmOffer.value = preflight.offer
+          vastConfirmCredit.value = preflight.credit
+          vastConfirmAlreadyRunning.value = false
+          vastConfirmInstance.value = null
+          vastConfirmOpen.value = true
+          pendingVastAction = () => genVid(sb, { ...opts, vastConfirmed: true })
+          return
+        }
+      } catch (err) {
+        toastError(err, { fallback: 'Gagal memeriksa status Vast.ai' })
+        return
+      } finally {
+        vastConfirmLoading.value = false
+      }
+    }
+  }
+
   const referenceImages = getShotReferenceImages(sb)
   // 参考素材完全来自分镜绑定的角色/场景/道具图片
   const params = {

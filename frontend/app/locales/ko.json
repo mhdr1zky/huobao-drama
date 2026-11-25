@@ -94,6 +94,20 @@
     "confirmDialog": {
       "title": "삭제 확인"
     },
+    "vastConfirm": {
+      "title": "Vast.ai GPU 대여 확인",
+      "subtitle": "GPU를 실행하기 전 머신 사양 및 예상 비용을 확인하세요:",
+      "gpu": "GPU 모델",
+      "price": "대여 요금",
+      "perHour": "/ 시간",
+      "bandwidth": "호스트 대역폭",
+      "reliability": "안정성/신뢰도",
+      "location": "호스트 위치",
+      "balance": "현재 잔액",
+      "autoDestroyNotice": "잔액 보호: 새 작업이 없을 경우 15분 유휴 후 GPU 인스턴스가 자동으로 종료(파기)됩니다.",
+      "confirmBtn": "계속 및 GPU 대여",
+      "reusingActive": "실행 중인 Vast.ai 인스턴스 #{id} ({gpu}) 재사용 중"
+    },
     "localeSwitcher": {
       "label": "UI 언어 전환"
     },

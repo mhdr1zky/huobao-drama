@@ -66,6 +66,24 @@ test('settings route exports vastai rent and destroy endpoints', async () => {
 
   assert.match(content, /\/vastai\/rent/)
   assert.match(content, /\/vastai\/instances/)
+  assert.match(content, /\/vastai\/preflight/)
   assert.match(content, /rentInstance/)
   assert.match(content, /destroyInstance/)
+})
+
+test('episode page and VastGpuConfirmDialog are wired for rental confirmation', async () => {
+  const fs = await import('node:fs')
+  const path = await import('node:path')
+  const { fileURLToPath } = await import('node:url')
+  const __dirname = path.dirname(fileURLToPath(import.meta.url))
+  const rootDir = path.resolve(__dirname, '../..')
+
+  const episodeContent = fs.readFileSync(path.join(rootDir, 'frontend/app/views/drama/episode.vue'), 'utf-8')
+  assert.match(episodeContent, /VastGpuConfirmDialog/)
+  assert.match(episodeContent, /vastPreflight/)
+  assert.match(episodeContent, /vastConfirmOpen/)
+
+  const dialogContent = fs.readFileSync(path.join(rootDir, 'frontend/app/components/VastGpuConfirmDialog.vue'), 'utf-8')
+  assert.match(dialogContent, /components\.vastConfirm\.title/)
+  assert.match(dialogContent, /components\.vastConfirm\.confirmBtn/)
 })

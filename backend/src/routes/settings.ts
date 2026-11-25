@@ -34,6 +34,46 @@ app.post('/vastai/offers', async (c) => {
   return success(c, { offers })
 })
 
+// POST /vastai/preflight — Cek pod aktif atau ambil rincian penawaran GPU terbaik + saldo akun
+app.post('/vastai/preflight', async (c) => {
+  const body = await c.req.json().catch(() => null)
+  const apiKey = body?.api_key
+  const maxBudget = Number(body?.max_budget || 1.2)
+  if (!apiKey) return badRequest(c, 'API Key Vast.ai diperlukan')
+
+  const account = await checkVastAccount(apiKey)
+  if (!account.ok) {
+    return badRequest(c, account.error || 'Gagal memverifikasi akun Vast.ai')
+  }
+
+  const instances = await listInstances(apiKey)
+  const activeRunning = instances.find(i => i.actual_status === 'running')
+  if (activeRunning) {
+    return success(c, {
+      alreadyRunning: true,
+      instance: {
+        id: activeRunning.id,
+        gpu_name: activeRunning.gpu_name,
+        dph_total: activeRunning.dph_total,
+        public_ipaddr: activeRunning.public_ipaddr,
+        ssh_host: activeRunning.ssh_host,
+      },
+      credit: account.credit,
+      email: account.email,
+    })
+  }
+
+  const offers = await searchBestGPUOffers(apiKey, maxBudget)
+  const bestOffer = offers[0] || null
+
+  return success(c, {
+    alreadyRunning: false,
+    offer: bestOffer,
+    credit: account.credit,
+    email: account.email,
+  })
+})
+
 // GET /vastai/instances — List semua instance aktif milik akun
 app.get('/vastai/instances', async (c) => {
   const apiKey = c.req.query('api_key')

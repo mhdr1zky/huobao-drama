@@ -94,6 +94,20 @@
     "confirmDialog": {
       "title": "确认删除"
     },
+    "vastConfirm": {
+      "title": "Vast.ai GPU 租赁确认",
+      "subtitle": "启动 GPU 前请确认机器配置与预估价格：",
+      "gpu": "GPU 型号",
+      "price": "租赁价格",
+      "perHour": "/ 小时",
+      "bandwidth": "主机带宽",
+      "reliability": "可用性/稳定性",
+      "location": "节点位置",
+      "balance": "当前余额",
+      "autoDestroyNotice": "余额保护：若 15 分钟内无新渲染任务，GPU 实例将自动销毁停止计费。",
+      "confirmBtn": "确认并租用 GPU",
+      "reusingActive": "正在复用运行中的 Vast.ai 实例 #{id} ({gpu})"
+    },
     "localeSwitcher": {
       "label": "切换界面语言"
     },
