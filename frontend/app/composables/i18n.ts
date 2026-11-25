@@ -22,10 +22,14 @@ export const UI_LOCALES: Array<{ value: UiLocale; label: string }> = [
   { value: 'ko', label: '한국어' },
 ]
 
+export function isUiLocale(v: unknown): v is UiLocale {
+  return typeof v === 'string' && UI_LOCALES.some(l => l.value === v)
+}
+
 export function readStoredLocale(): UiLocale {
   try {
     const v = localStorage.getItem(LOCALE_STORAGE_KEY)
-    if (v && UI_LOCALES.some(l => l.value === v)) return v as UiLocale
+    if (isUiLocale(v)) return v
   } catch { /* localStorage 不可用时回退默认 */ }
   return 'zh'
 }
@@ -49,4 +53,23 @@ export const i18n = createI18n({
 export function setUiLocale(locale: UiLocale) {
   i18n.global.locale.value = locale
   persistLocale(locale)
+}
+
+/**
+ * 启动时从后端 SQLite 同步语言偏好。
+ * 桌面端每次启动端口随机变化，localStorage 会重置，故以后端 content_language 为准。
+ */
+export async function syncLocaleFromBackend(
+  fetcher: () => Promise<{ language?: string } | null | undefined>,
+): Promise<UiLocale | null> {
+  try {
+    const res = await fetcher()
+    const lang = res?.language
+    if (isUiLocale(lang)) {
+      if (i18n.global.locale.value !== lang) setUiLocale(lang)
+      else persistLocale(lang)
+      return lang
+    }
+  } catch { /* 启动期后端暂不可达时不阻断渲染 */ }
+  return null
 }

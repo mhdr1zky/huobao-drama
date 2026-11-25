@@ -2789,7 +2789,10 @@ function pollExtractStatus(target, attempts = 150) {
       }
     } catch {}
     if (left > 0) setTimeout(() => tick(left - 1), 2500)
-    else extractingTargets.value = extractingTargets.value.filter(x => x !== target)
+    else {
+      extractingTargets.value = extractingTargets.value.filter(x => x !== target)
+      toast.warning(t('errors.timeout'))
+    }
   }
   setTimeout(() => tick(attempts), 2500)
 }
@@ -2870,7 +2873,10 @@ function pollVideoPromptBatch(attempts = 240) {
       }
     } catch {}
     if (left > 0) setTimeout(() => tick(left - 1), 2500)
-    else videoPromptBatch.value = { running: false, total: 0, completed: 0 }
+    else {
+      videoPromptBatch.value = { running: false, total: 0, completed: 0 }
+      toast.warning(t('errors.timeout'))
+    }
   }
   setTimeout(() => tick(attempts), 2500)
 }
@@ -2951,6 +2957,7 @@ function watchAsyncResult(check, attempts = 24, delay = 2500, onTimeout) {
     // 轮询耗尽仍未完成：清掉本次挂的 pending 状态，避免「一直显示生成中」
     // 但图片没出来（#136）。onTimeout 由调用方传，负责 toast/记录失败等。
     try { onTimeout?.() } catch { /* 清理回调本身不应再抛 */ }
+    toast.warning(t('errors.timeout'))
   })()
 }
 

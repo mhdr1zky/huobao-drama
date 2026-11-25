@@ -1,5 +1,17 @@
 const BASE = '/api/v1'
 
+export class ApiError extends Error {
+  status?: number
+  code?: number | string
+
+  constructor(message: string, status?: number, code?: number | string) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+    this.code = code
+  }
+}
+
 async function req<T = any>(method: string, path: string, body?: any): Promise<T> {
   const opts: RequestInit = { method, headers: { 'Content-Type': 'application/json' } }
   if (body) opts.body = JSON.stringify(body)
@@ -14,7 +26,7 @@ async function req<T = any>(method: string, path: string, body?: any): Promise<T
 
     if (!resp.ok || (json.code && json.code >= 400)) {
       console.log(`%c[API] %c${method} ${path} %c${resp.status} %c${ms}ms`, 'color:#888', 'color:#ef5350', 'color:#ef5350;font-weight:bold', 'color:#888', json.message || '')
-      throw new Error(json.message || `${resp.status}`)
+      throw new ApiError(json.message || `${resp.status}`, resp.status, json.code)
     }
 
     console.log(`%c[API] %c${method} ${path} %c${resp.status} %c${ms}ms`, 'color:#888', 'color:#66bb6a', 'color:#66bb6a;font-weight:bold', 'color:#888')
@@ -122,7 +134,7 @@ async function uploadReq<T = any>(path: string, file: File): Promise<T> {
   const json = await resp.json()
   if (!resp.ok || (json.code && json.code >= 400)) {
     console.log(`%c[API] %cPOST ${path} %c${resp.status}`, 'color:#888', 'color:#ef5350', 'color:#ef5350;font-weight:bold')
-    throw new Error(json.message || `${resp.status}`)
+    throw new ApiError(json.message || `${resp.status}`, resp.status, json.code)
   }
   return json.data ?? json
 }

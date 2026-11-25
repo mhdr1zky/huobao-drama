@@ -11,6 +11,8 @@ import { onMounted } from 'vue'
 import { Toaster, toast } from 'vue-sonner'
 import { useI18n } from 'vue-i18n'
 import MigrateOverlay from '~/components/MigrateOverlay.vue'
+import { syncLocaleFromBackend } from '~/composables/i18n'
+import { settingsAPI } from '~/composables/useApi'
 import { useDesktopBridge } from '~/composables/useDesktopBridge'
 import { useMigrateState } from '~/composables/useMigrateState'
 import { useTheme } from '~/composables/useTheme'
@@ -25,6 +27,8 @@ const bridge = useDesktopBridge()
 const { state, begin, update, end } = useMigrateState()
 
 onMounted(() => {
+  // 从后端 SQLite 同步语言偏好，避免桌面端重启换端口后 localStorage 丢失导致语言回退
+  void syncLocaleFromBackend(() => settingsAPI.contentLanguage())
   if (!bridge) return
   bridge.onMigrateProgress((p) => {
     if (p.phase === 'done') {

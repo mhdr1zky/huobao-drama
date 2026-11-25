@@ -22,6 +22,7 @@ function confirmDialog(lang: UiLocale): Promise<boolean> {
     const message = i18n.global.t('components.langSwitch.message')
 
     const open = ref(true)
+    let confirmed = false
     const host = document.createElement('div')
     document.body.appendChild(host)
     const app = createApp({
@@ -29,8 +30,8 @@ function confirmDialog(lang: UiLocale): Promise<boolean> {
         open: open.value,
         title,
         message,
-        onConfirm: () => { open.value = false },
-        onCancel: () => { open.value = false },
+        onConfirm: () => { confirmed = true; open.value = false },
+        onCancel: () => { confirmed = false; open.value = false },
       }),
     })
     app.use(i18n as unknown as Parameters<typeof app.use>[0])
@@ -47,7 +48,7 @@ function confirmDialog(lang: UiLocale): Promise<boolean> {
     const timer = setInterval(() => {
       if (!open.value) {
         clearInterval(timer)
-        pending?.resolve(true)
+        pending?.resolve(confirmed)
         pending = null
       }
     }, 80)
