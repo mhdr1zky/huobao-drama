@@ -41,12 +41,22 @@
             <span class="vast-spec-val">{{ offer.geolocation.trim() }}</span>
           </div>
 
+          <div class="vast-spec-row">
+            <span class="vast-spec-label">{{ t('components.vastConfirm.warmup') }}</span>
+            <span class="vast-spec-val text-warning">{{ t('components.vastConfirm.warmupVal') }}</span>
+          </div>
+
           <div class="vast-spec-row border-top">
             <span class="vast-spec-label">{{ t('components.vastConfirm.balance') }}</span>
             <span class="vast-spec-val font-bold" :class="credit && credit < 0.2 ? 'text-danger' : 'text-success'">
               ${{ credit != null ? Number(credit).toFixed(2) : '0.00' }}
             </span>
           </div>
+        </div>
+
+        <div class="vast-protection-notice">
+          <Clock :size="15" class="notice-icon text-warning" />
+          <span>{{ t('components.vastConfirm.warmupNotice') }}</span>
         </div>
 
         <div class="vast-protection-notice">
@@ -69,7 +79,7 @@
 </template>
 
 <script setup>
-import { Cpu, ShieldAlert, Loader2 } from 'lucide-vue-next'
+import { Cpu, ShieldAlert, Clock, Loader2 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -166,6 +176,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 .font-bold { font-weight: 700; }
 .font-mono { font-family: monospace; }
 .text-accent { color: var(--accent, #ff6b00); }
+.text-warning { color: #f59e0b; font-weight: 600; }
 .text-success { color: var(--success, #10b981); }
 .text-danger { color: var(--danger, #ef4444); }
 

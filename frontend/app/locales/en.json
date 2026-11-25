@@ -104,6 +104,9 @@
       "reliability": "Reliability",
       "location": "Host Location",
       "balance": "Your Balance",
+      "warmup": "Initial Warmup",
+      "warmupVal": "~3 - 5 min (first run only)",
+      "warmupNotice": "Warmup Note: First startup takes ~3-5 mins to pull container and load video models (~20GB). Subsequent shots are instant (0s) while pod remains active.",
       "autoDestroyNotice": "Balance Protection: The GPU instance will automatically be destroyed after 15 minutes of idle time if no new tasks are submitted.",
       "confirmBtn": "Proceed & Rent GPU",
       "reusingActive": "Reusing active Vast.ai pod #{id} ({gpu})"

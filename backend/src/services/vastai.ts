@@ -186,8 +186,8 @@ export async function rentInstance(
   } = {},
 ): Promise<{ instanceId: number; instanceApiKey?: string }> {
   const payload: Record<string, unknown> = {
-    image: opts.image ?? 'pytorch/pytorch:2.4.0-cuda12.4-cudnn9-runtime',
-    disk: opts.diskGb ?? 10,
+    image: opts.image ?? (process.env.VAST_IMAGE || 'yanwk/comfyui-boot:cu124'),
+    disk: opts.diskGb ?? Number(process.env.VAST_DISK_GB || 60),
     runtype: opts.runtype ?? 'ssh',
     target_state: 'running',
   }
@@ -231,7 +231,7 @@ export const destroyPod = destroyInstance
 export async function waitForRunning(
   apiKey: string,
   instanceId: number,
-  timeoutMs = 300_000,
+  timeoutMs = 600_000, // 10 menit untuk mengakomodasi download model & warmup container
 ): Promise<VastInstance> {
   const start = Date.now()
   let attempt = 0

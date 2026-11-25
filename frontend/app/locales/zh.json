@@ -104,6 +104,9 @@
       "reliability": "可用性/稳定性",
       "location": "节点位置",
       "balance": "当前余额",
+      "warmup": "初始预热时间",
+      "warmupVal": "约 3 - 5 分钟（仅首次启动）",
+      "warmupNotice": "预热说明：首次启动需拉取容器并加载视频模型权重（约 20GB），耗时约 3-5 分钟。实例运行期间后续分镜生成即时就绪（0 秒）。",
       "autoDestroyNotice": "余额保护：若 15 分钟内无新渲染任务，GPU 实例将自动销毁停止计费。",
       "confirmBtn": "确认并租用 GPU",
       "reusingActive": "正在复用运行中的 Vast.ai 实例 #{id} ({gpu})"

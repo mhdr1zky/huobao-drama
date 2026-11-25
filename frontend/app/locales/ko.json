@@ -104,6 +104,9 @@
       "reliability": "안정성/신뢰도",
       "location": "호스트 위치",
       "balance": "현재 잔액",
+      "warmup": "초기 웜업 시간",
+      "warmupVal": "약 3 - 5분 (최초 대여 시)",
+      "warmupNotice": "웜업 안내: 최초 실행 시 컨테이너 다운로드 및 비디오 모델 가중치(약 20GB) 로딩으로 약 3~5분이 소요됩니다. 인스턴스가 켜져 있는 동안 다음 샷은 즉시 실행(0초)됩니다.",
       "autoDestroyNotice": "잔액 보호: 새 작업이 없을 경우 15분 유휴 후 GPU 인스턴스가 자동으로 종료(파기)됩니다.",
       "confirmBtn": "계속 및 GPU 대여",
       "reusingActive": "실행 중인 Vast.ai 인스턴스 #{id} ({gpu}) 재사용 중"
