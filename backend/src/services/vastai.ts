@@ -159,11 +159,24 @@ export async function searchBestGPUOffers(apiKey: string, maxDph = 1.2): Promise
 
 /**
  * Ambil list semua instance yang sedang aktif milik akun ini.
- * Endpoint: GET /api/v0/instances/
+ * Endpoint: GET https://console.vast.ai/api/v1/instances/ (v1 menggantikan v0 yang deprecated)
  */
 export async function listInstances(apiKey: string): Promise<VastInstance[]> {
-  const data = await vastGet<any>(apiKey, '/instances/')
-  return Array.isArray(data.instances) ? data.instances : []
+  try {
+    const res = await fetch('https://console.vast.ai/api/v1/instances/', {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${apiKey.trim()}`,
+      },
+      signal: AbortSignal.timeout(15_000),
+    })
+    if (!res.ok) throw new Error(`Vast.ai GET /api/v1/instances/ → HTTP ${res.status}`)
+    const data = await res.json()
+    return Array.isArray(data.instances) ? data.instances : []
+  } catch (err: any) {
+    logTaskError('VastAI', 'list-instances-failed', { error: err.message })
+    return []
+  }
 }
 
 /**
