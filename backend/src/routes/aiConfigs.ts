@@ -107,6 +107,24 @@ function buildProbe(serviceType: string, provider: string, baseUrl: string, mode
     }
   }
 
+  if (p === 'vastai') {
+    return {
+      method: 'GET',
+      url: joinProviderUrl(baseUrl, '/api/v0', '/users/current/'),
+      headers: bearerHeaders(apiKey),
+      body: undefined,
+    }
+  }
+
+  if (p === 'comfyui') {
+    return {
+      method: 'GET',
+      url: joinProviderUrl(baseUrl, '', '/system_stats'),
+      headers: apiKey ? bearerHeaders(apiKey) : {},
+      body: undefined,
+    }
+  }
+
   return {
     method: 'GET',
     url: joinProviderUrl(baseUrl, '', m ? `/${m}` : '/'),

@@ -565,7 +565,17 @@
             <span class="field-hint">{{ t('settings.cfg.priorityHint') }}</span>
           </label>
           <label class="field"><span class="field-label">API Key</span><input v-model="cfgForm.api_key" class="input" type="password" placeholder="sk-..." /></label>
-          <label class="field"><span class="field-label">Base URL</span><input v-model="cfgForm.base_url" class="input" placeholder="https://..." /></label>
+          <label class="field">
+            <span class="field-label">Base URL</span>
+            <input v-model="cfgForm.base_url" class="input" :placeholder="baseUrlPlaceholder" />
+            <div class="field-hint" style="line-height: 1.5; margin-top: 4px;">
+              <span class="dim" style="display: block; font-weight: 600; margin-bottom: 2px;">Contoh Format Base URL:</span>
+              <span style="display: block;">• <b>Vast.ai</b>: <code>https://console.vast.ai</code> (Auto-Rent) atau <code>http://[IP-Host]:[Direct-Port]</code> (Manual Pod)</span>
+              <span style="display: block;">• <b>RunPod</b>: <code>https://[POD_ID]-8188.proxy.runpod.net</code> atau <code>http://127.0.0.1:8188</code> (via SSH tunnel)</span>
+              <span style="display: block;">• <b>OpenRouter / OpenAI Proxy</b>: <code>https://openrouter.ai/api/v1</code> atau <code>https://api.siliconflow.cn/v1</code></span>
+              <span style="display: block;">• <b>Local Ollama</b>: <code>http://localhost:11434/v1</code></span>
+            </div>
+          </label>
           <div class="field">
             <span class="field-label">{{ t('settings.cfg.models') }}</span>
             <div v-if="cfgForm.models.length" class="model-chips">
@@ -818,10 +828,17 @@ const providerPresets = {
     aliyun: { label: '阿里云百炼 Wan 3.0', baseUrl: 'https://{WorkspaceId}.cn-beijing.maas.aliyuncs.com', models: ['wan3.0-video', 'wan3.0-video-prime'] },
     volcengine: { label: 'Seedance 2.0 官方', baseUrl: 'https://ark.cn-beijing.volces.com', models: ['doubao-seedance-2-0-mini-260615', 'doubao-seedance-2-0-fast-260128', 'doubao-seedance-2-0-260128'] },
     minimax: { label: 'MiniMax H3 官方', baseUrl: 'https://api.minimaxi.com', models: ['MiniMax-H3'] },
-    vastai: { label: 'Vast.ai GPU Rental (Auto ComfyUI)', baseUrl: 'http://127.0.0.1:8188', models: ['MiniMax-H3-Multishot', 'Wan-2.1-Multishot'] },
-    custom: { label: 'Custom (ComfyUI / Video API)', baseUrl: 'http://127.0.0.1:8188', models: ['custom-video-model'] },
+    vastai: { label: 'Vast.ai Cloud Pod', baseUrl: 'https://console.vast.ai', models: ['MiniMax-H3-Multishot', 'Wan-2.1-Multishot'] },
+    custom: { label: 'Custom (ComfyUI / RunPod / Modal)', baseUrl: 'http://127.0.0.1:8188', models: ['custom-video-model'] },
   },
 }
+const baseUrlPlaceholder = computed(() => {
+  if (cfgForm.provider === 'vastai') return 'https://console.vast.ai'
+  if (cfgForm.provider === 'comfyui') return 'http://127.0.0.1:8188'
+  if (cfgForm.provider === 'custom') return 'https://api.example.com/v1'
+  return 'https://...'
+})
+
 const huobaoQuickConfigs = computed(() => {
   const base = huobaoSiteUrl.value
   return [
