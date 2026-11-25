@@ -12,6 +12,7 @@ import { getActiveConfig, getConfigById } from './ai.js'
 import { now } from '../utils/response.js'
 import { downloadFile, fetchImageAsCompressedDataUrl, generateImageThumb, readImageAsCompressedDataUrl, readImageAsDataUrl, saveBase64Image } from '../utils/storage.js'
 import { extractVideoPoster } from '../utils/video-poster.js'
+import { getOrProvisionComfyUIPod } from './vastai.js'
 import { getImageAdapter, getVideoAdapter } from './adapters/registry'
 import type { AIConfig } from './adapters/types'
 import { logTaskError, logTaskPayload, logTaskProgress, logTaskStart, logTaskSuccess, logTaskWarn, redactUrl } from '../utils/task-logger.js'
@@ -232,6 +233,7 @@ async function processTask(id: number, config: AIConfig) {
     })
 
     let url: string, method: string, headers: Record<string, string>, body: unknown
+    let effectiveConfig = config
 
     if (type === 'image') {
       const adapter = getImageAdapter(config.provider)
@@ -245,16 +247,23 @@ async function processTask(id: number, config: AIConfig) {
         referenceImages: resolvedReferenceImages.length ? JSON.stringify(resolvedReferenceImages) : null,
       }))
     } else {
-      const adapter = getVideoAdapter(config.provider)
+      if (config.provider === 'vastai' && (config.baseUrl?.includes('console.vast.ai') || !config.baseUrl)) {
+        logTaskProgress(label, 'vastai-auto-rent-check', { id })
+        const podUrl = await getOrProvisionComfyUIPod(config.apiKey)
+        effectiveConfig = { ...config, baseUrl: podUrl }
+        logTaskProgress(label, 'vastai-auto-rent-ready', { id, podUrl })
+      }
+
+      const adapter = getVideoAdapter(effectiveConfig.provider)
       const resolvedImageUrl = await normalizeVideoReferenceUrl(params.imageUrl)
       const resolvedFirstFrameUrl = await normalizeVideoReferenceUrl(params.firstFrameUrl)
       const resolvedLastFrameUrl = await normalizeVideoReferenceUrl(params.lastFrameUrl)
       const resolvedReferenceImageUrls = await normalizeVideoReferenceUrls(params.referenceImageUrls)
       // 视频使用公网地址；短音色按厂商能力使用 data URL 或公网地址。
       const resolvedReferenceVideoUrls = resolvePublicMediaUrls(params.referenceVideoUrls, 'video')
-      const resolvedReferenceAudioUrls = await resolveReferenceAudioUrls(params.referenceAudioUrls, config.provider)
+      const resolvedReferenceAudioUrls = await resolveReferenceAudioUrls(params.referenceAudioUrls, effectiveConfig.provider)
       const resolvedReferenceFileUrl = resolvePublicMediaUrl(params.referenceFileUrl, 'file')
-      ;({ url, method, headers, body } = adapter.buildGenerateRequest(config, {
+      ;({ url, method, headers, body } = adapter.buildGenerateRequest(effectiveConfig, {
         id: record.id,
         model: record.model,
         prompt: record.prompt,
@@ -332,11 +341,11 @@ async function processTask(id: number, config: AIConfig) {
       }
 
       await markPolling(id, taskId)
-      await pollTask(record, config, taskId!)
+      await pollTask(record, effectiveConfig ?? config, taskId!)
       return
     }
 
-    const adapter = getVideoAdapter(config.provider)
+    const adapter = getVideoAdapter((effectiveConfig ?? config).provider)
     const { isAsync, taskId, videoUrl, duration } = adapter.parseGenerateResponse(result)
     if (taskId) {
       await markPolling(id, taskId)
@@ -350,7 +359,7 @@ async function processTask(id: number, config: AIConfig) {
     }
 
     await markPolling(id, taskId)
-    await pollTask(record, config, taskId!)
+    await pollTask(record, effectiveConfig ?? config, taskId!)
   } catch (err: any) {
     const [current] = await db.select().from(schema.sysTask).where(eq(schema.sysTask.id, id))
     const uncertain = current?.type === 'video' && !current.taskId && !current.resultUrl

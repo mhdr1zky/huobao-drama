@@ -18,10 +18,12 @@ import { joinProviderUrl } from './url'
 
 export class VastAIVideoAdapter implements VideoProviderAdapter {
   provider = 'vastai'
+  private lastBaseUrl = 'http://127.0.0.1:8188'
 
   buildGenerateRequest(config: AIConfig, record: VideoGenerationRecord): ProviderRequest {
+    this.lastBaseUrl = config.baseUrl || 'http://127.0.0.1:8188'
     const prompt = (record.prompt || '').trim()
-    const targetUrl = config.baseUrl || 'http://127.0.0.1:8188'
+    const targetUrl = this.lastBaseUrl
 
     // Format multishot prompt sesuai resep DRACIN-AI.md
     let formattedPrompt = prompt
@@ -80,7 +82,8 @@ export class VastAIVideoAdapter implements VideoProviderAdapter {
   }
 
   buildPollRequest(config: AIConfig, taskId: string): ProviderRequest {
-    const targetUrl = config.baseUrl || 'http://127.0.0.1:8188'
+    this.lastBaseUrl = config.baseUrl || 'http://127.0.0.1:8188'
+    const targetUrl = this.lastBaseUrl
     return {
       url: joinProviderUrl(targetUrl, '', `/history/${taskId}`),
       method: 'GET',
@@ -107,20 +110,21 @@ export class VastAIVideoAdapter implements VideoProviderAdapter {
     }
 
     if (taskData.outputs) {
+      const base = this.lastBaseUrl.replace(/\/+$/, '')
       for (const nodeId of Object.keys(taskData.outputs)) {
         const out = taskData.outputs[nodeId]
         if (out.videos && out.videos.length > 0) {
           const v = out.videos[0]
           return {
             status: 'completed',
-            videoUrl: `/view?filename=${encodeURIComponent(v.filename)}&subfolder=${encodeURIComponent(v.subfolder || '')}&type=${encodeURIComponent(v.type || 'output')}`,
+            videoUrl: `${base}/view?filename=${encodeURIComponent(v.filename)}&subfolder=${encodeURIComponent(v.subfolder || '')}&type=${encodeURIComponent(v.type || 'output')}`,
           }
         }
         if (out.gifs && out.gifs.length > 0) {
           const g = out.gifs[0]
           return {
             status: 'completed',
-            videoUrl: `/view?filename=${encodeURIComponent(g.filename)}&subfolder=${encodeURIComponent(g.subfolder || '')}&type=${encodeURIComponent(g.type || 'output')}`,
+            videoUrl: `${base}/view?filename=${encodeURIComponent(g.filename)}&subfolder=${encodeURIComponent(g.subfolder || '')}&type=${encodeURIComponent(g.type || 'output')}`,
           }
         }
       }

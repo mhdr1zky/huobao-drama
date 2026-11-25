@@ -568,12 +568,19 @@
           <label class="field">
             <span class="field-label">Base URL</span>
             <input v-model="cfgForm.base_url" class="input" :placeholder="baseUrlPlaceholder" />
-            <div class="field-hint" style="line-height: 1.5; margin-top: 4px;">
-              <span class="dim" style="display: block; font-weight: 600; margin-bottom: 2px;">Contoh Format Base URL:</span>
-              <span style="display: block;">• <b>Vast.ai</b>: <code>https://console.vast.ai</code> (Auto-Rent) atau <code>http://[IP-Host]:[Direct-Port]</code> (Manual Pod)</span>
-              <span style="display: block;">• <b>RunPod</b>: <code>https://[POD_ID]-8188.proxy.runpod.net</code> atau <code>http://127.0.0.1:8188</code> (via SSH tunnel)</span>
-              <span style="display: block;">• <b>OpenRouter / OpenAI Proxy</b>: <code>https://openrouter.ai/api/v1</code> atau <code>https://api.siliconflow.cn/v1</code></span>
-              <span style="display: block;">• <b>Local Ollama</b>: <code>http://localhost:11434/v1</code></span>
+            <div class="field-hint" style="line-height: 1.6; margin-top: 6px; font-size: 12px;">
+              <span class="dim" style="display: block; font-weight: 600; margin-bottom: 4px;">Panduan & Contoh Format Base URL:</span>
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <span>• <b>Vast.ai Dashboard (Auto-Rent Otomatis)</b>: <code>https://console.vast.ai/api/v0</code><br/>
+                  <small class="dim" style="margin-left: 10px;">Aplikasi otomatis mencari GPU terbaik saat render, menyewa mesin, dan auto-destroy pod setelah 15 menit idle agar saldo hemat.</small>
+                </span>
+                <span>• <b>ComfyUI / Pod Mandiri</b>: <code>http://[IP-Host]:[Direct-Port]</code> (contoh: <code>http://198.44.98.101:8188</code>)<br/>
+                  <small class="dim" style="margin-left: 10px;">Gunakan ini jika mesin sudah Anda sewa secara manual dan port ComfyUI sudah aktif berjalan.</small>
+                </span>
+                <span>• <b>RunPod Cloud</b>: <code>https://[POD_ID]-8188.proxy.runpod.net</code> atau <code>http://127.0.0.1:8188</code> (via SSH port forwarding)</span>
+                <span>• <b>OpenRouter / OpenAI Compatible</b>: <code>https://openrouter.ai/api/v1</code> atau <code>https://api.siliconflow.cn/v1</code></span>
+                <span>• <b>Local Ollama / vLLM</b>: <code>http://localhost:11434/v1</code></span>
+              </div>
             </div>
           </label>
           <div class="field">
@@ -828,12 +835,12 @@ const providerPresets = {
     aliyun: { label: '阿里云百炼 Wan 3.0', baseUrl: 'https://{WorkspaceId}.cn-beijing.maas.aliyuncs.com', models: ['wan3.0-video', 'wan3.0-video-prime'] },
     volcengine: { label: 'Seedance 2.0 官方', baseUrl: 'https://ark.cn-beijing.volces.com', models: ['doubao-seedance-2-0-mini-260615', 'doubao-seedance-2-0-fast-260128', 'doubao-seedance-2-0-260128'] },
     minimax: { label: 'MiniMax H3 官方', baseUrl: 'https://api.minimaxi.com', models: ['MiniMax-H3'] },
-    vastai: { label: 'Vast.ai Cloud Pod', baseUrl: 'https://console.vast.ai', models: ['MiniMax-H3-Multishot', 'Wan-2.1-Multishot'] },
+    vastai: { label: 'Vast.ai (Auto-Rent Cloud GPU)', baseUrl: 'https://console.vast.ai/api/v0', models: ['MiniMax-H3-Multishot', 'Wan-2.1-Multishot'] },
     custom: { label: 'Custom (ComfyUI / RunPod / Modal)', baseUrl: 'http://127.0.0.1:8188', models: ['custom-video-model'] },
   },
 }
 const baseUrlPlaceholder = computed(() => {
-  if (cfgForm.provider === 'vastai') return 'https://console.vast.ai'
+  if (cfgForm.provider === 'vastai') return 'https://console.vast.ai/api/v0'
   if (cfgForm.provider === 'comfyui') return 'http://127.0.0.1:8188'
   if (cfgForm.provider === 'custom') return 'https://api.example.com/v1'
   return 'https://...'
