@@ -1,79 +1,80 @@
-# Rencana Modifikasi (`plan.md`) — Global i18n, Notifikasi/Error API, & Persistensi Bahasa
+# Rencana Modifikasi (`plan.md`) — Integrasi Otomatis GPU Rental (Vast.ai) & ComfyUI Video Generation
 
-> Dibuat berdasarkan [context.md](file:///c:/Users/Hades/Documents/lab/huobao-drama/context.md) dan aturan di [aturanmodifproyeku.md](file:///c:/Users/Hades/Documents/lab/aturanmodifproyeku.md).
+> Disusun berdasarkan [context.md](file:///c:/Users/Hades/Documents/lab/huobao-drama/context.md), resep produksi [DRACIN-AI.md](file:///c:/Users/Hades/Downloads/Paket-Komplit-OpikPun-AI/3-dracin/DRACIN-AI.md), dan aturan di [aturanmodifproyeku.md](file:///c:/Users/Hades/Documents/lab/aturanmodifproyeku.md).
 
 ---
 
 ## 1. Tujuan dan Ruang Lingkup
 
 ### Tujuan
-1. Memastikan pergantian bahasa (`zh`, `en`, `ja`, `ko`) mencakup **keseluruhan UI, notifikasi (`toast`), error API, dan notifikasi timeout** secara konsisten.
-2. Memastikan pilihan bahasa **tersimpan dan otomatis terpulihkan** saat aplikasi dibuka ulang (baik di mode Web/Docker maupun Desktop Electron yang port-nya berubah tiap startup).
+Menambahkan penyedia generasi video mandiri berbasis rental GPU cloud (**Vast.ai** / **ComfyUI**) yang **berjalan otomatis penuh**. Pengguna hanya perlu memasukkan API Key Vast.ai (dan budget limit); sistem AI aplikasi secara otonom akan:
+1. Memeriksa kualitas & stabilitas koneksi internet PC lokal sebelum render.
+2. Mencari GPU terbaik (RTX 5090 / 4090, VRAM ≥ 24GB, RAM ≥ 40GB, Disk ≥ 150GB) dengan koneksi host terlancar (Download ≥ 300 Mbps, Upload ≥ 100 Mbps, Reliability ≥ 98%, direct port, lokasi geografis terdekat).
+3. Menyewa instance secara otomatis saat ada tugas video, memasang ComfyUI dengan bobot model (MiniMax H3 / Wan multishot), dan mengeksekusi render melalui alur baku `sys_task` & `VideoProviderAdapter`.
+4. Mengunduh hasil video langsung ke `data/static/videos/` dan otomatis mematikan/menghancurkan (destroy) pod GPU saat idle (15 menit tanpa job) untuk melindungi saldo pengguna.
 
 ### Termasuk dalam Ruang Lingkup
-- **Persistensi & Sinkronisasi Bahasa Saat Startup**:
-  - Sinkronisasi `locale` UI saat aplikasi dibuka dari backend SQLite (`GET /api/v1/settings/content-language` / `app_settings`), bukan hanya bergantung pada `localStorage` (yang hilang saat port Electron berubah).
-  - Perbaikan bug tombol Cancel pada dialog konfirmasi ganti bahasa (`useUnifiedLanguage.ts`) agar membatalkan dengan benar.
-- **Lokalisasi Error API, Timeout, & Notifikasi (`useToast.ts` + `useApi.ts` + `locales/*.json`)**:
-  - Menghilangkan perilaku *passthrough* mentah pesan Mandarin dari backend di `mapError()` saat bahasa aktif bukan `zh`.
-  - Menambahkan mekanisme pemetaan error API & timeout (baik berdasarkan `error_code` / pola pesan backend maupun pola timeout/jaringan seperti `AbortError`, `ETIMEDOUT`, `timeout`, `polling exceeded`) ke key terjemahan di `zh.json`, `en.json`, `ja.json`, `ko.json`.
-  - Memastikan notifikasi timeout (mis. saat polling gambar/video/ekstraksi/prompt batch habis) menggunakan key i18n yang sesuai.
-- **Audit String UI & Desktop yang Masih Hardcoded**:
-  - Mengganti sisa string UI/notifikasi hardcoded Mandarin di komponen/halaman frontend (termasuk `episode.vue`, `detail.vue`, `settings.vue`, `index.vue`, komponen dialog) serta label/dialog utama di `desktop/src/main.ts` bila perlu (menyesuaikan locale tersimpan).
+- **Pre-flight Network Check**: Endpoint diagnostik untuk mengukur latency dan kecepatan koneksi PC lokal, serta peringatan otomatis jika jaringan tidak stabil.
+- **Vast.ai Orchestrator (`vastai.ts`)**: Modul pencarian tawaran terbaik, sewa otomatis, status polling, dan auto-teardown saat idle.
+- **VastAI / ComfyUI Video Adapter (`vastai-video.ts`)**: Terintegrasi penuh ke dalam arsitektur adapter Huobao Drama (`registry.ts`, `generation.ts`, `types.ts`).
+- **Prompt Transpiler Multishot**: Format prompt video khusus ComfyUI (`<Picture 1..N>`, `<d>dialog</d>`, penanda sudut kamera, filter kulit berminyak) sesuai `DRACIN-AI.md`.
+- **UI Settings & Workbench Integration**: Menu konfigurasi di `settings.vue` (input API key, widget cek koneksi PC lokal, status saldo/pod aktif) dan pemilihan model di topbar episode.
+- **Multi-language Support**: Label dan status error baru diterjemahkan lengkap ke dalam 4 bahasa (`en`, `zh`, `ja`, `ko`).
 
 ### Tidak Termasuk dalam Ruang Lingkup
-- Mengubah isi atau logika prompt/skill AI di `backend/workspace/prompts/` dan `backend/workspace/skills/`.
-- Menerjemahkan pesan error teknis mentah dari provider pihak ketiga (OpenAI/Volcengine/MiniMax/Aliyun) secara kata-per-kata di log terminal; cukup dipetakan ke pesan ramah pengguna sesuai bahasa UI di frontend/task error summary.
-- Mengubah arsitektur database atau menambah bahasa baru di luar `zh`, `en`, `ja`, `ko`.
+- Penyewaan GPU di luar platform yang menyediakan REST API terotomatisasi (fokus utama pada Vast.ai).
+- Mengubah alur inti database SQLite atau merusak adapter bawaan (`volcengine`, `minimax`, `aliyun`).
 
 ---
 
-## 2. Daftar File yang Diubah / Dibuat Beserta Alasannya
+## 2. Daftar File yang Diubah / Dibuat
 
 | File | Aksi | Alasan |
 |---|---|---|
-| `frontend/app/composables/i18n.ts` | Ubah | Menambah helper sinkronisasi locale dari backend (`syncLocaleFromBackend` / `setUiLocale`) agar state awal selalu akurat |
-| `frontend/app/app.vue` | Ubah | Memanggil sinkronisasi bahasa dari backend saat aplikasi dimount sehingga bahasa tersimpan di SQLite langsung diterapkan saat app dibuka ulang |
-| `frontend/app/composables/useUnifiedLanguage.ts` | Ubah | Memperbaiki bug `onCancel` yang tetap me-resolve `true` pada `confirmDialog` |
-| `frontend/app/composables/useApi.ts` | Ubah | Menyertakan status HTTP / `errorCode` pada `Error` yang dilempar agar `mapError()` dapat memetakan error API secara akurat tanpa bergantung pada teks Mandarin mentah |
-| `frontend/app/composables/useToast.ts` | Ubah | Menghentikan passthrough teks Mandarin saat locale != `zh`; menambah pemetaan error API backend, timeout (`AbortError`/`ETIMEDOUT`/dll.), dan fallback terlokalisasi |
-| `frontend/app/locales/zh.json`, `en.json`, `ja.json`, `ko.json` | Ubah | Menambah key terjemahan untuk error API umum (validasi, not found, belum konfigurasi AI, duplikat submit, timeout polling/request, dll.) |
-| `frontend/app/views/drama/episode.vue` (dan view/komponen lain jika ditemukan sisa hardcoded) | Ubah | Memastikan notifikasi timeout & sisa string UI menggunakan `t(...)` dari `vue-i18n` |
-| `backend/src/utils/response.ts` (opsional/terbatas pada helper error) | Ubah | Mendukung field opsional `error_code` pada JSON error response agar frontend bisa memetakan error API secara deterministik |
-| `frontend/tests/i18n-persistence-and-errors.test.mjs` | Buat | Unit/structure test untuk verifikasi persistensi locale, `useUnifiedLanguage`, pemetaan `mapError()` (termasuk error API & timeout di semua locale), serta kelengkapan key di 4 file `locales/*.json` |
+| `backend/src/utils/network-check.ts` | Buat | Utilitas pengujian ping latency & kecepatan koneksi internet PC lokal |
+| `backend/src/routes/settings.ts` | Ubah | Menambahkan endpoint `GET /api/v1/settings/network-check` dan endpoint status/saldo Vast.ai |
+| `backend/src/services/vastai.ts` | Buat | Service orchestrator Vast.ai: pencarian penawaran terbaik (GPU + speed + reliability), auto-rent, monitoring, dan auto-destroy idle timer |
+| `backend/src/services/adapters/vastai-video.ts` | Buat | Implementasi `VideoProviderAdapter` untuk ComfyUI di pod Vast.ai (upload referensi gambar/audio, trigger workflow, polling, streaming download) |
+| `backend/src/services/adapters/types.ts` | Ubah | Menambahkan tipe & konstanta konfigurasi terkait provider `vastai` |
+| `backend/src/services/adapters/registry.ts` | Ubah | Mendaftarkan adapter `vastai` ke dalam daftar `videoAdapters` |
+| `frontend/app/pages/settings.vue` | Ubah | Menambahkan preset template `vastai` di form Video AI, tombol cek koneksi PC lokal, dan indikator pod aktif |
+| `frontend/app/locales/{en,zh,ja,ko}.json` | Ubah | Menambahkan string terjemahan untuk pengaturan Vast.ai, diagnostik jaringan, dan notifikasi terkait |
+| `backend/tests/vastai-integration.test.ts` | Buat | Unit test untuk scoring penawaran GPU terbaik, parsing adapter response, dan diagnostik jaringan |
 
 ---
 
 ## 3. Langkah Kecil Berurutan
 
-### Langkah 1 — Perbaikan Persistensi Bahasa & Dialog Konfirmasi ✅ Selesai
+### Langkah 1 — Modul Diagnostik Koneksi PC Lokal & Endpoint Backend
 - **Perubahan**:
-  - Di `frontend/app/composables/useUnifiedLanguage.ts`: perbaiki `confirmDialog()` agar `onCancel` me-resolve `false` dan `onConfirm` me-resolve `true`.
-  - Di `frontend/app/composables/i18n.ts` dan `frontend/app/app.vue`: saat aplikasi startup (`onMounted` di `app.vue`), ambil `settingsAPI.contentLanguage()` dari backend SQLite; jika berbeda dengan `i18n.global.locale.value` (mis. karena port Electron berubah sehingga `localStorage` kosong), perbarui `setUiLocale(lang)` secara otomatis.
-- **File terdampak**: `frontend/app/composables/useUnifiedLanguage.ts`, `frontend/app/composables/i18n.ts`, `frontend/app/app.vue`.
-- **Test verifikasi**: Tambah test di `frontend/tests/i18n-persistence-and-errors.test.mjs` (verifikasi `onCancel` resolve `false`, serta logika sinkronisasi `contentLanguage` ke `setUiLocale`), lalu jalankan test suite `frontend/tests/`.
+  - Buat `backend/src/utils/network-check.ts` untuk mengukur RTT latency dan estimasi kecepatan transfer.
+  - Tambahkan route `GET /settings/network-check` di `backend/src/routes/settings.ts`.
+- **Test verifikasi**: Jalankan `node --test` atau test script untuk memverifikasi endpoint mengembalikan status latency, upload/download stability, dan rekomendasi status jaringan.
 
-### Langkah 2 — Pemetaan Error API & Timeout Multi-Bahasa di `useApi.ts`, `useToast.ts`, & `locales/*.json` ✅ Selesai
+### Langkah 2 — Service Orchestrator Vast.ai & Smart GPU Matching
 - **Perubahan**:
-  - Di `frontend/app/composables/useApi.ts`: buat `ApiError` (atau properti `status` & `errorCode` pada `Error`) saat response gagal atau timeout (`AbortSignal`/fetch error).
-  - Di `frontend/app/composables/useToast.ts`:
-    - Batasi passthrough string Mandarin mentah hanya ketika `i18n.global.locale.value === 'zh'`.
-    - Tambahkan tabel/pola pemetaan pesan error API backend & timeout (seperti `未配置图片模型`, `未配置视频模型`, `角色不存在`, `剧集不存在`, `镜头不存在`, `正在提交任务`, `请求参数错误`, `资源不存在`, `AbortError`, `ETIMEDOUT`, `timeout`, `polling exceeded`) ke key i18n di `errors.*`.
-  - Lengkapi key `errors.*` di `frontend/app/locales/{zh,en,ja,ko}.json`.
-- **File terdampak**: `frontend/app/composables/useApi.ts`, `frontend/app/composables/useToast.ts`, `frontend/app/locales/zh.json`, `frontend/app/locales/en.json`, `frontend/app/locales/ja.json`, `frontend/app/locales/ko.json`.
-- **Test verifikasi**: Jalankan unit test `mapError()` di `frontend/tests/i18n-persistence-and-errors.test.mjs` untuk menguji error API Mandarin, error HTTP status, dan error timeout pada locale `zh`, `en`, `ja`, `ko`.
+  - Buat `backend/src/services/vastai.ts`:
+    - Fungsi pencarian penawaran GPU terbaik dengan filter: GPU tier (RTX 5090/4090), VRAM ≥ 24GB, disk ≥ 150GB, inet_down ≥ 300 Mbps, inet_up ≥ 100 Mbps, reliability ≥ 98%, direct port, dan lokasi terdekat.
+    - Fungsi `rentInstance()`, `getInstanceStatus()`, `destroyInstance()`.
+    - Mekanisme *Auto-Destroy Timer* (idle sentinel 15 menit tanpa aktivitas video render).
+- **Test verifikasi**: Unit test algoritma scoring tawaran penawaran GPU di `backend/tests/vastai-integration.test.ts`.
 
-### Langkah 3 — Audit & Lokalisasi Notifikasi Timeout & Sisa String UI Hardcoded ✅ Selesai
+### Langkah 3 — Pembuatan Video Adapter `VastAIVideoAdapter`
 - **Perubahan**:
-  - Audit seluruh `frontend/app/` (`episode.vue`, `detail.vue`, `settings.vue`, `index.vue`, `components/*.vue`) untuk notifikasi timeout (`watchAsyncResult` / polling) dan teks UI yang masih hardcoded Mandarin.
-  - Pastikan semua notifikasi timeout dan pesan UI yang ditemukan menggunakan `t(...)` dengan key yang tersedia di `zh.json`, `en.json`, `ja.json`, `ko.json`.
-- **File terdampak**: `frontend/app/views/drama/episode.vue` (serta file view/komponen lain yang terdeteksi saat audit), `frontend/app/locales/{zh,en,ja,ko}.json`.
-- **Test verifikasi**: Jalankan seluruh test di `frontend/tests/` (termasuk `watch-async-result-timeout.test.mjs` dan test kelengkapan key 4 bahasa).
+  - Buat `backend/src/services/adapters/vastai-video.ts` sesuai kontrak `VideoProviderAdapter`.
+  - Dukung mapping referensi multishot `<Picture 1..N>` dan audio lock sesuai resep `DRACIN-AI.md`.
+  - Daftarkan `vastai` ke `backend/src/services/adapters/registry.ts` dan tambahkan tipe pendukung di `types.ts`.
+- **Test verifikasi**: Unit test pemetaan request ComfyUI graph dan parsing polling response di `backend/tests/vastai-integration.test.ts`.
 
-### Langkah 4 — Verifikasi Akhir & Build Check ✅ Selesai (Test `node --test` lulus; `typecheck` & `generate` menunggu `npm install`)
-- **Perubahan**: Tidak ada perubahan fitur baru; hanya memastikan seluruh test (`backend/tests/`, `frontend/tests/`, `desktop/tests/`) dan `typecheck` / `nuxt generate` berjalan bersih.
-- **File terdampak**: —
-- **Test verifikasi**: Jalankan `cd backend && npm run typecheck`, `node --test frontend/tests/*.test.mjs`, dan `cd frontend && npm run generate`.
+### Langkah 4 — Integrasi UI Settings & Dukungan 4 Bahasa
+- **Perubahan**:
+  - Di `frontend/app/pages/settings.vue`: tambahkan preset provider `vastai` (pilihan model `MiniMax-H3-Multishot` dan `Wan-2.1-Multishot`), input API key, budget limit, dan widget "Check Local Network & GPU Offers".
+  - Tambahkan string i18n di `en.json`, `zh.json`, `ja.json`, `ko.json`.
+- **Test verifikasi**: Uji struktur UI dan paritas key terjemahan di 4 file locale via unit test frontend.
+
+### Langkah 5 — Verifikasi Akhir, Build Check, & Clean Commit
+- **Perubahan**: Memastikan `typecheck` backend, semua test suite, dan alur aplikasi berjalan bersih tanpa regresi pada provider lain.
+- **Test verifikasi**: Jalankan `npm run typecheck` di backend dan unit test suite di frontend.
 
 ---
 
@@ -81,16 +82,16 @@
 
 | Risiko | Mitigasi |
 |---|---|
-| `episode.vue` berukuran sangat besar (~6.264 baris) dan punya test struktural ketat (`watch-async-result-timeout.test.mjs`) | Lakukan edit minimal dan terlokalisir; jangan mengubah signature `watchAsyncResult` atau pola cleanup yang diuji test struktural; jalankan `watch-async-result-timeout.test.mjs` setelah edit. |
-| Sinkronisasi `settingsAPI.contentLanguage()` saat `app.vue` mount bisa memicu kedipan teks singkat jika `localStorage` kosong (di Electron) | Simpan juga di `localStorage` sebagai cache cepat untuk port yang sama, dan jalankan `settingsAPI.contentLanguage()` sedini mungkin di `app.vue` (serta pastikan `vue-i18n` reaktif memperbarui semua komponen). |
-| Pesan error backend baru di masa depan belum ada di peta `useToast.ts` | Sediakan fallback yang rapi berdasarkan HTTP status (`400`, `404`, `429`, `5xx`, `timeout`) agar saat locale != `zh` pengguna tetap mendapat pesan terlokalisasi yang jelas, bukan teks Mandarin mentah atau pesan kosong. |
+| Saldo pengguna terkuras jika pod GPU lupa dimatikan | **Auto-Destroy Timer Mandiri**: Server lokal memasang timer internal 15 menit setelah task video terakhir selesai; jika tidak ada task baru, instance otomatis dihapus melalui API Vast.ai. |
+| Koneksi PC lokal lambat menyebabkan upload gambar/audio timeout | **Pre-flight Network Check**: Sistem mendeteksi latency tinggi dan otomatis menyesuaikan batas timeout fetch serta memberi peringatan ramah di UI. |
+| Host GPU sewaan tiba-tiba offline di tengah render | **Auto-Failover & Resume**: Jika host tidak merespons healthcheck 3 kali berturut-turut, sistem menandai error dan menawarkan tombol *Recover Video* untuk menyewa host baru tanpa mengulang shot yang sudah selesai. |
 
 ---
 
 ## 5. Kriteria Selesai (*Definition of Done*)
 
-1. Mengganti bahasa ke `en`, `ja`, `ko`, atau `zh` lalu menutup dan membuka kembali aplikasi (termasuk simulasi `localStorage` kosong / ganti port) tetap mempertahankan bahasa yang dipilih.
-2. Klik "Batal/Cancel" pada dialog ganti bahasa benar-benar membatalkan perubahan tanpa me-reload halaman.
-3. Error API dari backend (seperti data tidak ditemukan, AI service belum dikonfigurasi, validasi gagal) dan error timeout/jaringan tampil dalam bahasa sesuai locale UI aktif (tidak bocor teks Mandarin saat locale `en`/`ja`/`ko`).
-4. Seluruh key i18n baru tersedia lengkap di `zh.json`, `en.json`, `ja.json`, dan `ko.json`.
-5. Semua test terkait dan `typecheck` lulus tanpa error.
+1. Pengguna dapat memilih provider `vastai` di menu Pengaturan Video dan melakukan tes koneksi lokal & validasi API Key.
+2. Algoritma pencarian otomatis memilih GPU terbaik dengan koneksi host tercepat dan terstabil.
+3. Seluruh alur pembuatan video berjalan persis seperti provider bawaan (`processing` → `downloading` → `completed` → ekstraksi poster frame).
+4. Instance GPU otomatis dihancurkan setelah periode idle untuk menghemat biaya pengguna.
+5. Semua pesan dan UI terlokalisasi dalam 4 bahasa (`en`, `zh`, `ja`, `ko`) dan seluruh test lulus.
