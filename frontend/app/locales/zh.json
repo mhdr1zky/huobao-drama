@@ -279,6 +279,14 @@
       "custom": "自定义",
       "empty": "暂无配置"
     },
+    "network": {
+      "title": "网络质量与 Vast.ai 诊断",
+      "desc": "测试本地网络质量并验证云端 GPU 就绪状态",
+      "testBtn": "测试网络与 GPU",
+      "testing": "测试中...",
+      "localPing": "本地延迟",
+      "gateway": "Vast.ai 美国网关"
+    },
     "general": {
       "title": "通用",
       "desc": "应用级通用设置。语言切换同时作用于界面与 AI 生成内容。",

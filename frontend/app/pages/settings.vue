@@ -153,19 +153,22 @@
           <section class="card setup-panel">
             <div class="setup-panel-head compact">
               <div>
-                <div class="setup-title">{{ t('settings.network.title') || 'Diagnostik Koneksi & Vast.ai GPU' }}</div>
-                <div class="setup-desc">{{ t('settings.network.desc') || 'Uji kualitas koneksi PC lokal dan periksa kesiapan GPU terbaik di Vast.ai' }}</div>
+                <div class="setup-title">{{ t('settings.network.title') }}</div>
+                <div class="setup-desc">{{ t('settings.network.desc') }}</div>
               </div>
               <button class="btn btn-sm btn-ghost" :disabled="netChecking" @click="runNetworkCheck">
                 <RefreshCw :size="13" :class="{ 'spin': netChecking }" />
-                {{ netChecking ? 'Menguji...' : 'Uji Koneksi PC & GPU' }}
+                {{ netChecking ? t('settings.network.testing') : t('settings.network.testBtn') }}
               </button>
             </div>
             <div v-if="netResult" class="template-row" style="margin-top: 8px;">
-              <span class="tag" :class="netResult.quality === 'excellent' || netResult.quality === 'good' ? 'tag-success' : 'tag-error'">
-                Latency: {{ netResult.latencyMs }}ms ({{ netResult.quality }})
+              <span class="tag" :class="netResult.quality === 'excellent' || netResult.quality === 'good' ? 'tag-success' : 'tag-warning'">
+                {{ t('settings.network.localPing') }}: {{ netResult.localLatencyMs || netResult.latencyMs }}ms ({{ netResult.quality }})
               </span>
-              <span v-if="vastInfo?.ok" class="tag tag-accent">
+              <span v-if="netResult.vastLatencyMs" class="tag tag-accent">
+                {{ t('settings.network.gateway') }}: {{ netResult.vastLatencyMs }}ms
+              </span>
+              <span v-if="vastInfo?.ok" class="tag tag-success">
                 Vast.ai: {{ vastInfo.email }} (${{ vastInfo.credit?.toFixed(2) }})
               </span>
               <span v-for="w in netResult.warnings" :key="w" class="tag tag-warning">{{ w }}</span>

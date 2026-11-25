@@ -279,6 +279,14 @@
       "custom": "Custom",
       "empty": "No configs yet"
     },
+    "network": {
+      "title": "Network Diagnostics & Vast.ai Status",
+      "desc": "Test local connection quality and verify cloud GPU readiness",
+      "testBtn": "Test Connection & GPU",
+      "testing": "Testing...",
+      "localPing": "Local Latency",
+      "gateway": "Vast.ai US Gateway"
+    },
     "general": {
       "title": "General",
       "desc": "App-level settings. Language switching applies to both the UI and AI-generated content.",

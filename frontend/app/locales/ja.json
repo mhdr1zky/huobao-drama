@@ -279,6 +279,14 @@
       "custom": "カスタム",
       "empty": "設定がありません"
     },
+    "network": {
+      "title": "ネットワーク品質＆Vast.ai診断",
+      "desc": "ローカル回線品質をテストし、クラウドGPUの準備状況を確認します",
+      "testBtn": "回線＆GPUテスト",
+      "testing": "テスト中...",
+      "localPing": "ローカル遅延",
+      "gateway": "Vast.ai 米国ゲートウェイ"
+    },
     "general": {
       "title": "一般",
       "desc": "アプリ全体の設定。言語切替は UI と AI 生成コンテンツの両方に適用されます。",
