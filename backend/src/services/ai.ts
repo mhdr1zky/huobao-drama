@@ -30,20 +30,24 @@ export function parseConfigTemperature(settingsRaw: string | null | undefined): 
 }
 
 export const officialProviders: Record<ServiceType, readonly string[]> = {
-  text: ['openai', 'gemini', 'volcengine'],
-  image: ['openai', 'gemini', 'volcengine'],
-  video: ['volcengine', 'minimax', 'aliyun'],
+  text: ['openai', 'gemini', 'volcengine', 'custom'],
+  image: ['openai', 'gemini', 'volcengine', 'custom'],
+  video: ['volcengine', 'minimax', 'aliyun', 'vastai', 'comfyui', 'custom'],
 }
 
 export function isOfficialProvider(serviceType?: string | null, provider?: string | null): boolean {
+  if (!serviceType || !provider) return false
+  const p = provider.toLowerCase()
+  // Mendukung provider kustom (openai-compatible / custom / comfyui / vastai)
+  if (p === 'custom' || p === 'vastai' || p === 'comfyui' || p.startsWith('custom-')) return true
   const providers = officialProviders[serviceType as ServiceType]
-  return !!providers && providers.includes((provider || '').toLowerCase())
+  return !!providers && providers.includes(p)
 }
 
 export function getTextProviderBaseUrl(config: AIConfig) {
   const provider = config.provider.toLowerCase()
 
-  if (provider === 'openai') {
+  if (provider === 'openai' || provider === 'custom' || provider.startsWith('custom-')) {
     return joinProviderUrl(config.baseUrl, '/v1', '')
   }
 

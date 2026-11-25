@@ -191,6 +191,9 @@ export const settingsAPI = {
   setContentLanguage: (language: string) => api.put('/settings/content-language', { language }),
   bannedWords: () => api.get<{ words: { word: string; replace: string }[] }>('/settings/banned-words'),
   setBannedWords: (words: { word: string; replace?: string }[]) => api.put('/settings/banned-words', { words }),
+  networkCheck: () => api.get<{ ok: boolean; latencyMs: number; quality: string; warnings: string[] }>('/settings/network-check'),
+  checkVastAi: (apiKey: string) => api.post<{ ok: boolean; email?: string; credit?: number; error?: string }>('/settings/vastai/check', { api_key: apiKey }),
+  searchVastOffers: (apiKey: string, maxBudget?: number) => api.post<{ offers: any[] }>('/settings/vastai/offers', { api_key: apiKey, max_budget: maxBudget }),
 }
 
 // 服务器/Docker 部署的版本检查与更新（桌面版走 useDesktopBridge，不用此 API）

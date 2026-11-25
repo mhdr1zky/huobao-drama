@@ -3,9 +3,36 @@
  */
 import { Hono } from 'hono'
 import { getContentLanguage, setContentLanguage, getToursSeen, setToursSeen, getBannedWords, setBannedWords, CONTENT_LANGUAGES, type ContentLanguage } from '../services/app-settings.js'
+import { checkLocalNetwork } from '../utils/network-check.js'
+import { checkVastAccount, searchBestGPUOffers } from '../services/vastai.js'
 import { success, badRequest } from '../utils/response.js'
 
 const app = new Hono()
+
+// GET /network-check — Diagnostik koneksi internet PC lokal
+app.get('/network-check', async (c) => {
+  const result = await checkLocalNetwork()
+  return success(c, result)
+})
+
+// POST /vastai/check — Periksa saldo akun & koneksi Vast.ai
+app.post('/vastai/check', async (c) => {
+  const body = await c.req.json().catch(() => null)
+  const apiKey = body?.api_key
+  if (!apiKey) return badRequest(c, 'API Key Vast.ai diperlukan')
+  const info = await checkVastAccount(apiKey)
+  return success(c, info)
+})
+
+// POST /vastai/offers — Cari penawaran GPU terbaik
+app.post('/vastai/offers', async (c) => {
+  const body = await c.req.json().catch(() => null)
+  const apiKey = body?.api_key
+  const maxBudget = Number(body?.max_budget || 1.2)
+  if (!apiKey) return badRequest(c, 'API Key Vast.ai diperlukan')
+  const offers = await searchBestGPUOffers(apiKey, maxBudget)
+  return success(c, { offers })
+})
 
 // GET /content-language — 当前 AI 内容语言
 app.get('/content-language', async (c) => {

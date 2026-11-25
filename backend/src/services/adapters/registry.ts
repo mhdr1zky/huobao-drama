@@ -8,6 +8,7 @@ import { VolcEngineImageAdapter } from './volcengine-image'
 import { VolcEngineVideoAdapter } from './volcengine-video'
 import { MiniMaxVideoAdapter } from './minimax-video'
 import { AliyunWanVideoAdapter } from './aliyun-wan-video'
+import { VastAIVideoAdapter } from './vastai-video'
 import type { ImageProviderAdapter, VideoProviderAdapter } from './types'
 
 // 图片 Adapter 注册表
@@ -15,6 +16,7 @@ export const imageAdapters: Record<string, ImageProviderAdapter> = {
   openai: new OpenAIImageAdapter(),
   gemini: new GeminiImageAdapter(),
   volcengine: new VolcEngineImageAdapter(),
+  custom: new OpenAIImageAdapter(), // Universal OpenAI-compatible image adapter
 }
 
 // 视频 Adapter 注册表
@@ -22,6 +24,8 @@ export const videoAdapters: Record<string, VideoProviderAdapter> = {
   volcengine: new VolcEngineVideoAdapter(),
   minimax: new MiniMaxVideoAdapter(),
   aliyun: new AliyunWanVideoAdapter(),
+  vastai: new VastAIVideoAdapter(),
+  comfyui: new VastAIVideoAdapter(),
 }
 
 /**
@@ -30,7 +34,8 @@ export const videoAdapters: Record<string, VideoProviderAdapter> = {
  * @returns 对应的 Adapter
  */
 export function getImageAdapter(provider: string): ImageProviderAdapter {
-  const adapter = imageAdapters[provider.toLowerCase()]
+  const p = provider.toLowerCase()
+  const adapter = imageAdapters[p] || (p.startsWith('custom') ? imageAdapters.custom : undefined)
   if (!adapter) throw new Error(`Unsupported image provider: ${provider}`)
   return adapter
 }
@@ -41,7 +46,8 @@ export function getImageAdapter(provider: string): ImageProviderAdapter {
  * @returns 对应的 Adapter
  */
 export function getVideoAdapter(provider: string): VideoProviderAdapter {
-  const adapter = videoAdapters[provider.toLowerCase()]
+  const p = provider.toLowerCase()
+  const adapter = videoAdapters[p] || (p.startsWith('custom') ? (videoAdapters.comfyui || videoAdapters.vastai || videoAdapters.minimax) : undefined)
   if (!adapter) throw new Error(`Unsupported video provider: ${provider}`)
   return adapter
 }

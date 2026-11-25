@@ -153,6 +153,28 @@
           <section class="card setup-panel">
             <div class="setup-panel-head compact">
               <div>
+                <div class="setup-title">{{ t('settings.network.title') || 'Diagnostik Koneksi & Vast.ai GPU' }}</div>
+                <div class="setup-desc">{{ t('settings.network.desc') || 'Uji kualitas koneksi PC lokal dan periksa kesiapan GPU terbaik di Vast.ai' }}</div>
+              </div>
+              <button class="btn btn-sm btn-ghost" :disabled="netChecking" @click="runNetworkCheck">
+                <RefreshCw :size="13" :class="{ 'spin': netChecking }" />
+                {{ netChecking ? 'Menguji...' : 'Uji Koneksi PC & GPU' }}
+              </button>
+            </div>
+            <div v-if="netResult" class="template-row" style="margin-top: 8px;">
+              <span class="tag" :class="netResult.quality === 'excellent' || netResult.quality === 'good' ? 'tag-success' : 'tag-error'">
+                Latency: {{ netResult.latencyMs }}ms ({{ netResult.quality }})
+              </span>
+              <span v-if="vastInfo?.ok" class="tag tag-accent">
+                Vast.ai: {{ vastInfo.email }} (${{ vastInfo.credit?.toFixed(2) }})
+              </span>
+              <span v-for="w in netResult.warnings" :key="w" class="tag tag-warning">{{ w }}</span>
+            </div>
+          </section>
+
+          <section class="card setup-panel">
+            <div class="setup-panel-head compact">
+              <div>
                 <div class="setup-title">{{ t('settings.ai.manualTitle') }}</div>
                 <div class="setup-desc">{{ t('settings.ai.manualDesc') }}</div>
               </div>
@@ -774,7 +796,7 @@ const serviceTypes = computed(() => [
   { type: 'image', label: t('common.serviceType.image') },
   { type: 'video', label: t('common.serviceType.video') },
 ])
-const providers = ['gemini', 'openai', 'volcengine', 'minimax', 'aliyun']
+const providers = ['gemini', 'openai', 'volcengine', 'minimax', 'aliyun', 'vastai', 'custom']
 const providerSelectOptions = computed(() => providers.map(p => ({ label: p, value: p })))
 const serviceMeta = computed(() => ({
   text: { label: t('common.serviceType.text'), desc: t('settings.ai.meta.text') },
@@ -785,15 +807,19 @@ const providerPresets = {
   text: {
     gemini: { label: 'Gemini 官方', baseUrl: 'https://generativelanguage.googleapis.com', models: ['gemini-3.8-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] },
     openai: { label: 'OpenAI 官方', baseUrl: 'https://api.openai.com', models: ['deepseek-v4-pro', 'gpt-5.6-terra'] },
+    custom: { label: 'Custom (OpenAI Compatible)', baseUrl: 'https://api.openai.com/v1', models: ['custom-model'] },
   },
   image: {
     gemini: { label: 'Gemini 官方', baseUrl: 'https://generativelanguage.googleapis.com', models: ['gemini-3-pro-image', 'gemini-3.1-flash-image'] },
     openai: { label: 'OpenAI 官方', baseUrl: 'https://api.openai.com', models: ['gpt-image-2'] },
+    custom: { label: 'Custom (OpenAI Compatible)', baseUrl: 'https://api.openai.com/v1', models: ['dall-e-3', 'flux-schnell'] },
   },
   video: {
     aliyun: { label: '阿里云百炼 Wan 3.0', baseUrl: 'https://{WorkspaceId}.cn-beijing.maas.aliyuncs.com', models: ['wan3.0-video', 'wan3.0-video-prime'] },
     volcengine: { label: 'Seedance 2.0 官方', baseUrl: 'https://ark.cn-beijing.volces.com', models: ['doubao-seedance-2-0-mini-260615', 'doubao-seedance-2-0-fast-260128', 'doubao-seedance-2-0-260128'] },
     minimax: { label: 'MiniMax H3 官方', baseUrl: 'https://api.minimaxi.com', models: ['MiniMax-H3'] },
+    vastai: { label: 'Vast.ai GPU Rental (Auto ComfyUI)', baseUrl: 'http://127.0.0.1:8188', models: ['MiniMax-H3-Multishot', 'Wan-2.1-Multishot'] },
+    custom: { label: 'Custom (ComfyUI / Video API)', baseUrl: 'http://127.0.0.1:8188', models: ['custom-video-model'] },
   },
 }
 const huobaoQuickConfigs = computed(() => {
@@ -824,6 +850,27 @@ function applyProviderPreset(type, provider) {
   cfgForm.models = [...preset.models]
   // 配置名持久化进 DB：用 provider 英文 + 服务类型英文标识拼，不随界面语言漂移
   cfgForm.name = `${preset.label}-${type}`
+}
+
+const netChecking = ref(false)
+const netResult = ref(null)
+const vastInfo = ref(null)
+
+async function runNetworkCheck() {
+  if (netChecking.value) return
+  netChecking.value = true
+  try {
+    netResult.value = await settingsAPI.networkCheck()
+    // Jika ada config vastai di list, coba verifikasi saldo
+    const vastCfg = cfgs.value.find(c => c.provider === 'vastai' && c.api_key)
+    if (vastCfg) {
+      vastInfo.value = await settingsAPI.checkVastAi(vastCfg.api_key)
+    }
+  } catch (e) {
+    toastError(e)
+  } finally {
+    netChecking.value = false
+  }
 }
 
 async function loadCfgs() { try { cfgs.value = await aiConfigAPI.list() } catch (e) { toastError(e) } }

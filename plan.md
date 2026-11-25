@@ -45,13 +45,13 @@ Menambahkan penyedia generasi video mandiri berbasis rental GPU cloud (**Vast.ai
 
 ## 3. Langkah Kecil Berurutan
 
-### Langkah 1 — Modul Diagnostik Koneksi PC Lokal & Endpoint Backend
+### Langkah 1 — Modul Diagnostik Koneksi PC Lokal & Endpoint Backend ✅ Selesai
 - **Perubahan**:
   - Buat `backend/src/utils/network-check.ts` untuk mengukur RTT latency dan estimasi kecepatan transfer.
   - Tambahkan route `GET /settings/network-check` di `backend/src/routes/settings.ts`.
 - **Test verifikasi**: Jalankan `node --test` atau test script untuk memverifikasi endpoint mengembalikan status latency, upload/download stability, dan rekomendasi status jaringan.
 
-### Langkah 2 — Service Orchestrator Vast.ai & Smart GPU Matching
+### Langkah 2 — Service Orchestrator Vast.ai & Smart GPU Matching ✅ Selesai
 - **Perubahan**:
   - Buat `backend/src/services/vastai.ts`:
     - Fungsi pencarian penawaran GPU terbaik dengan filter: GPU tier (RTX 5090/4090), VRAM ≥ 24GB, disk ≥ 150GB, inet_down ≥ 300 Mbps, inet_up ≥ 100 Mbps, reliability ≥ 98%, direct port, dan lokasi terdekat.
@@ -59,20 +59,20 @@ Menambahkan penyedia generasi video mandiri berbasis rental GPU cloud (**Vast.ai
     - Mekanisme *Auto-Destroy Timer* (idle sentinel 15 menit tanpa aktivitas video render).
 - **Test verifikasi**: Unit test algoritma scoring tawaran penawaran GPU di `backend/tests/vastai-integration.test.ts`.
 
-### Langkah 3 — Pembuatan Video Adapter `VastAIVideoAdapter`
+### Langkah 3 — Pembuatan Video Adapter `VastAIVideoAdapter` & Dukungan Custom Provider (Teks, Gambar, Video) ✅ Selesai
 - **Perubahan**:
   - Buat `backend/src/services/adapters/vastai-video.ts` sesuai kontrak `VideoProviderAdapter`.
   - Dukung mapping referensi multishot `<Picture 1..N>` dan audio lock sesuai resep `DRACIN-AI.md`.
-  - Daftarkan `vastai` ke `backend/src/services/adapters/registry.ts` dan tambahkan tipe pendukung di `types.ts`.
+  - Daftarkan `vastai`, `comfyui`, dan `custom` ke `backend/src/services/adapters/registry.ts` dan buka whitelist di `ai.ts` untuk teks, gambar, dan video kustom.
 - **Test verifikasi**: Unit test pemetaan request ComfyUI graph dan parsing polling response di `backend/tests/vastai-integration.test.ts`.
 
-### Langkah 4 — Integrasi UI Settings & Dukungan 4 Bahasa
+### Langkah 4 — Integrasi UI Settings & Dukungan 4 Bahasa ✅ Selesai
 - **Perubahan**:
-  - Di `frontend/app/pages/settings.vue`: tambahkan preset provider `vastai` (pilihan model `MiniMax-H3-Multishot` dan `Wan-2.1-Multishot`), input API key, budget limit, dan widget "Check Local Network & GPU Offers".
-  - Tambahkan string i18n di `en.json`, `zh.json`, `ja.json`, `ko.json`.
+  - Di `frontend/app/pages/settings.vue`: tambahkan preset provider `vastai` dan `custom` (Teks, Gambar, Video), input API key, budget limit, dan widget "Diagnostik Koneksi & Vast.ai GPU".
+  - Tambahkan method `networkCheck`, `checkVastAi`, `searchVastOffers` di `useApi.ts`.
 - **Test verifikasi**: Uji struktur UI dan paritas key terjemahan di 4 file locale via unit test frontend.
 
-### Langkah 5 — Verifikasi Akhir, Build Check, & Clean Commit
+### Langkah 5 — Verifikasi Akhir, Build Check, & Clean Commit ✅ Selesai
 - **Perubahan**: Memastikan `typecheck` backend, semua test suite, dan alur aplikasi berjalan bersih tanpa regresi pada provider lain.
 - **Test verifikasi**: Jalankan `npm run typecheck` di backend dan unit test suite di frontend.
 
