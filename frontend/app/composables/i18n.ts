@@ -31,7 +31,7 @@ export function readStoredLocale(): UiLocale {
     const v = localStorage.getItem(LOCALE_STORAGE_KEY)
     if (isUiLocale(v)) return v
   } catch { /* localStorage 不可用时回退默认 */ }
-  return 'zh'
+  return 'en'
 }
 
 export function persistLocale(locale: UiLocale) {
@@ -43,7 +43,7 @@ export function persistLocale(locale: UiLocale) {
 export const i18n = createI18n({
   legacy: false,
   locale: readStoredLocale(),
-  fallbackLocale: 'zh',
+  fallbackLocale: 'en',
   messages: { zh, en, ja, ko },
   missingWarn: false,
   fallbackWarn: false,

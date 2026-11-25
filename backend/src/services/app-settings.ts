@@ -19,12 +19,12 @@ function isContentLanguage(v: unknown): v is ContentLanguage {
   return typeof v === 'string' && (CONTENT_LANGUAGES as readonly string[]).includes(v)
 }
 
-/** 读取全局内容语言；未设置或值非法时回退 'zh'（保持历史默认行为） */
+/** 读取全局内容语言；未设置或值非法时回退 'en'（首次启动默认英文） */
 export function getContentLanguage(): ContentLanguage {
   const row = db.select().from(schema.appSettings)
     .where(eq(schema.appSettings.key, CONTENT_LANGUAGE_KEY))
     .get()
-  return isContentLanguage(row?.value) ? row.value : 'zh'
+  return isContentLanguage(row?.value) ? row.value : 'en'
 }
 
 /** 写入全局内容语言（upsert） */
